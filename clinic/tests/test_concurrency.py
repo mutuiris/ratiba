@@ -38,8 +38,7 @@ def test_two_bookings_same_slot_one_wins():
     doc, pat = _make_clinic()
     with ThreadPoolExecutor(max_workers=2) as pool:
         futures = [
-            pool.submit(_run, lambda: book(doc.id, pat.id, slot(6), now=slot(0)))
-            for _ in range(2)
+            pool.submit(_run, lambda: book(doc.id, pat.id, slot(6), now=slot(0))) for _ in range(2)
         ]
         results = [f.result() for f in futures]
     assert sorted(results) == ["SlotTaken", "ok"]  # exactly one wins
