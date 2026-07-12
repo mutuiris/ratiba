@@ -9,4 +9,5 @@ urlpatterns = [
     path("api/token", TokenObtainPairView.as_view(), name="token-obtain"),
     path("api/token/refresh", TokenRefreshView.as_view(), name="token-refresh"),
     path("api/", include("clinic.api.urls")),
+    path("", include("clinic.web.urls")),
 ]
