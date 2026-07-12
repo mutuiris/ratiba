@@ -2,9 +2,11 @@
 
 from datetime import date
 
+from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
+from clinic.api.permissions import check_appointment, check_patient
 from clinic.api.serializers import (
     AppointmentSerializer,
     BookRequestSerializer,
@@ -20,8 +22,10 @@ from clinic.services.exceptions import BookingError
 
 @api_view(["POST"])
 def create_appointment(request):
+    """Book a slot for a patient"""
     data = BookRequestSerializer(data=request.data)
     data.is_valid(raise_exception=True)
+    check_patient(request, data.validated_data["patient"])
     try:
         appt = booking.book(
             data.validated_data["doctor"],
@@ -36,6 +40,7 @@ def create_appointment(request):
 
 @api_view(["GET"])
 def doctor_availability(request, doctor_id):
+    """List a doctor's free 30-minute slots for a date"""
     raw = request.query_params.get("date")
     if not raw:
         return Response({"detail": "A date query parameter is required"}, status=400)
@@ -48,8 +53,10 @@ def doctor_availability(request, doctor_id):
 
 @api_view(["PATCH"])
 def cancel_appointment(request, pk):
+    """Cancel an appointment and free its slot"""
     data = CancelRequestSerializer(data=request.data)
     data.is_valid(raise_exception=True)
+    check_appointment(request, get_object_or_404(Appointment, pk=pk))
     try:
         appt = booking.cancel(pk, data.validated_data["reason"])
     except BookingError as exc:
@@ -59,12 +66,12 @@ def cancel_appointment(request, pk):
 
 @api_view(["PATCH"])
 def reschedule_appointment(request, pk):
+    """Move an appointment to a new validated slot"""
     data = RescheduleRequestSerializer(data=request.data)
     data.is_valid(raise_exception=True)
+    check_appointment(request, get_object_or_404(Appointment, pk=pk))
     try:
         appt = booking.reschedule(pk, data.validated_data["start_at"])
-    except Appointment.DoesNotExist:
-        return Response({"detail": "Appointment not found"}, status=404)
     except BookingError as exc:
         return Response({"detail": exc.message}, status=exc.http_status)
     return Response(AppointmentSerializer(appt).data)
@@ -72,5 +79,7 @@ def reschedule_appointment(request, pk):
 
 @api_view(["GET"])
 def patient_appointments(request, pk):
+    """List a patient's upcoming appointments"""
+    check_patient(request, pk)
     appointments = upcoming_for_patient(pk)
     return Response(AppointmentSerializer(appointments, many=True).data)
