@@ -1,0 +1,18 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py"]
+addopts = "--cov=clinic --cov=accounts --cov-report=term-missing"
+
+[tool.coverage.run]
+omit = ["*/migrations/*", "*/tests/*", "config/*"]
+
+[tool.coverage.report]
+fail_under = 90
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+# UP = pyupgrade, B = bugbear, DJ = flake8-django
+select = ["E", "F", "I", "UP", "B", "DJ"]
