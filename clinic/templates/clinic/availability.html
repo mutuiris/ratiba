@@ -1,0 +1,16 @@
+{% extends "clinic/base.html" %}
+{% block title %}Availability{% endblock %}
+{% block content %}
+  <h1>{{ doctor.name }} &mdash; {{ day }}</h1>
+  {% if reschedule_id %}<p>Pick a new slot to reschedule your appointment.</p>{% endif %}
+  {% for slot in slots %}
+    <form class="slot" method="post"
+          action="{% if reschedule_id %}{% url 'web-reschedule' reschedule_id %}{% else %}{% url 'web-book' doctor.id %}{% endif %}">
+      {% csrf_token %}
+      <input type="hidden" name="start_at" value="{{ slot.isoformat }}">
+      <button type="submit">{{ slot|time:"H:i" }}</button>
+    </form>
+  {% empty %}
+    <p>No free slots for this day.</p>
+  {% endfor %}
+{% endblock %}
