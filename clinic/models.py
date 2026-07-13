@@ -34,8 +34,8 @@ class WorkingHours(models.Model):
     """A doctor's recurring availability for one weekday, in local clinic time"""
 
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name="working_hours")
-    weekday = models.PositiveSmallIntegerField() # 0=Monday, 6=Sunday
-    start_time = models.TimeField() # local clinic time of day
+    weekday = models.PositiveSmallIntegerField()  # 0=Monday, 6=Sunday
+    start_time = models.TimeField()  # local clinic time of day
     end_time = models.TimeField()
 
     class Meta:

@@ -18,7 +18,7 @@ def get_availability(doctor_id: int, day: date, now: datetime | None = None) -> 
     try:
         hours = WorkingHours.objects.get(doctor_id=doctor_id, weekday=day.weekday())
     except WorkingHours.DoesNotExist:
-        return [] # doctor is off that day
+        return []  # doctor is off that day
 
     grid = slot_starts(day, hours.start_time, hours.end_time, tz)
     if not grid:
