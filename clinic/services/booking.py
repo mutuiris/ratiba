@@ -11,9 +11,6 @@ from clinic.models import Appointment, Patient, WorkingHours
 from clinic.services import exceptions as ex
 from clinic.services.slots import SLOT
 
-# process local idempotency cache, pushed to a DB table if multiple workers run
-_SEEN_KEYS: dict[str, int] = {}
-
 
 def _validate_slot(doctor_id: int, start_at: datetime, now: datetime) -> None:
     """Raise a BookingError if start_at is in the past, too soon, or outside working hours"""
@@ -47,27 +44,31 @@ def book(
 ) -> Appointment:
     """Create a booked appointment for a validated slot, raising BookingError on failure"""
     now = now or timezone.now()
-    if idempotency_key and idempotency_key in _SEEN_KEYS:
-        return Appointment.objects.get(pk=_SEEN_KEYS[idempotency_key])
+    if idempotency_key:
+        prior = Appointment.objects.filter(idempotency_key=idempotency_key).first()
+        if prior:
+            return prior
 
     if not Patient.objects.filter(pk=patient_id).exists():
         raise ex.UnknownPatient()
     _validate_slot(doctor_id, start_at, now)
     try:
         with transaction.atomic():
-            appt = Appointment.objects.create(
+            return Appointment.objects.create(
                 doctor_id=doctor_id,
                 patient_id=patient_id,
                 start_at=start_at,
                 end_at=start_at + SLOT,
                 status="booked",
+                idempotency_key=idempotency_key,
             )
     except IntegrityError as exc:
+        # the unique constraint on the slot was taken by another transaction
+        if idempotency_key:
+            prior = Appointment.objects.filter(idempotency_key=idempotency_key).first()
+            if prior:
+                return prior
         raise ex.SlotTaken() from exc
-
-    if idempotency_key:
-        _SEEN_KEYS[idempotency_key] = appt.pk
-    return appt
 
 
 def cancel(appointment_id: int, reason: str) -> Appointment:
