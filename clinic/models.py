@@ -81,6 +81,7 @@ class Appointment(models.Model):
     cancel_reason = models.CharField(max_length=200, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
+    idempotency_key = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     class Meta:
         constraints = [
