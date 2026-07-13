@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from clinic.models import Appointment, WorkingHours
+from clinic.models import Appointment, Patient, WorkingHours
 from clinic.services import exceptions as ex
 from clinic.services.slots import SLOT
 
@@ -33,6 +33,10 @@ def _validate_slot(doctor_id: int, start_at: datetime, now: datetime) -> None:
     if not (hours.start_time <= local.time() and slot_end_local <= hours.end_time):
         raise ex.OutsideHours("Slot is outside the doctor's working hours")
 
+    offset = (local.hour - hours.start_time.hour) * 60 + (local.minute - hours.start_time.minute)
+    if local.second or local.microsecond or offset % settings.SLOT_MINUTES != 0:
+        raise ex.OffGrid()
+
 
 def book(
     doctor_id: int,
@@ -46,6 +50,8 @@ def book(
     if idempotency_key and idempotency_key in _SEEN_KEYS:
         return Appointment.objects.get(pk=_SEEN_KEYS[idempotency_key])
 
+    if not Patient.objects.filter(pk=patient_id).exists():
+        raise ex.UnknownPatient()
     _validate_slot(doctor_id, start_at, now)
     try:
         with transaction.atomic():
