@@ -3,35 +3,87 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Ratiba{% endblock %}</title>
+  <title>{% block title %}Ratiba{% endblock %} · Ratiba Clinic</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
-    nav { margin-bottom: 1.5rem; }
-    nav a { margin-right: 1rem; }
-    .msg { padding: .5rem .75rem; border-radius: 4px; margin: .25rem 0; }
-    .msg.success { background: #e6f4ea; }
-    .msg.error { background: #fce8e6; }
-    .slot { display: inline-block; margin: .2rem; }
-    table { border-collapse: collapse; width: 100%; }
-    td, th { border: 1px solid #ddd; padding: .4rem; text-align: left; }
-    button { cursor: pointer; }
+    :root {
+      --primary: #0d9488; --primary-dark: #0f766e;
+      --bg: #f1f5f9; --surface: #ffffff; --border: #e2e8f0;
+      --text: #1e293b; --muted: #64748b;
+      --ok-bg: #dcfce7; --ok-fg: #166534;
+      --err-bg: #fee2e2; --err-fg: #991b1b;
+      --radius: 10px; --shadow: 0 1px 3px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.04);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5;
+    }
+    header { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 10; }
+    .bar { max-width: 820px; margin: 0 auto; padding: .85rem 1.25rem; display: flex; align-items: center; gap: 1.25rem; }
+    .brand { font-weight: 700; font-size: 1.15rem; color: var(--primary-dark); text-decoration: none; }
+    .brand span { color: var(--muted); font-weight: 400; }
+    nav { display: flex; align-items: center; gap: 1rem; margin-left: auto; }
+    nav a { color: var(--text); text-decoration: none; font-size: .95rem; }
+    nav a:hover { color: var(--primary-dark); }
+    main { max-width: 820px; margin: 0 auto; padding: 1.75rem 1.25rem; }
+    h1 { font-size: 1.5rem; margin: 0 0 1.25rem; }
+    .muted { color: var(--muted); }
+
+    .msg { padding: .7rem 1rem; border-radius: var(--radius); margin: 0 0 1rem; font-size: .95rem; }
+    .msg.success { background: var(--ok-bg); color: var(--ok-fg); }
+    .msg.error { background: var(--err-bg); color: var(--err-fg); }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.1rem 1.25rem; margin-bottom: 1rem; }
+    .card-row { display: flex; align-items: flex-end; gap: 1rem; flex-wrap: wrap; }
+    .grow { flex: 1; }
+
+    label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .25rem; }
+    input[type=text], input[type=password], input[type=date], input[type=datetime-local] {
+      width: 100%; padding: .55rem .7rem; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: #fff;
+    }
+    button, .btn {
+      display: inline-block; padding: .55rem .95rem; border: 0; border-radius: 8px;
+      background: var(--primary); color: #fff; font: inherit; font-weight: 500; cursor: pointer; text-decoration: none;
+    }
+    button:hover, .btn:hover { background: var(--primary-dark); }
+    .btn-ghost { background: transparent; color: var(--primary-dark); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg); }
+    .btn-danger { background: transparent; color: var(--err-fg); border: 1px solid var(--border); }
+    .btn-danger:hover { background: var(--err-bg); }
+
+    .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: .5rem; }
+    .slots button { width: 100%; background: #fff; color: var(--primary-dark); border: 1px solid var(--primary); font-variant-numeric: tabular-nums; }
+    .slots button:hover { background: var(--primary); color: #fff; }
+
+    table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+    th, td { padding: .7rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #f8fafc; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
+    tr:last-child td { border-bottom: 0; }
+    .actions { display: flex; gap: .4rem; align-items: center; }
+    .inline { display: inline; }
   </style>
 </head>
 <body>
-  <nav>
-    <a href="{% url 'web-doctors' %}">Doctors</a>
-    <a href="{% url 'web-appointments' %}">My appointments</a>
-    {% if user.is_authenticated %}
-      <form action="{% url 'logout' %}" method="post" style="display:inline">
-        {% csrf_token %}<button type="submit">Log out ({{ user.username }})</button>
-      </form>
-    {% endif %}
-  </nav>
+  <header>
+    <div class="bar">
+      <a class="brand" href="{% url 'web-doctors' %}">Ratiba <span>Clinic</span></a>
+      {% if user.is_authenticated %}
+        <nav>
+          <a href="{% url 'web-doctors' %}">Book</a>
+          <a href="{% url 'web-appointments' %}">My appointments</a>
+          <form action="{% url 'logout' %}" method="post" class="inline">
+            {% csrf_token %}<button class="btn-ghost" type="submit">Log out</button>
+          </form>
+        </nav>
+      {% endif %}
+    </div>
+  </header>
 
-  {% for message in messages %}
-    <p class="msg {{ message.tags }}">{{ message }}</p>
-  {% endfor %}
-
-  {% block content %}{% endblock %}
+  <main>
+    {% for message in messages %}
+      <p class="msg {{ message.tags }}">{{ message }}</p>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </main>
 </body>
 </html>
