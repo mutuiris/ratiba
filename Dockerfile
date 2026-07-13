@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir -r requirements/prod.txt
 
 COPY . .
 
-RUN SECRET_KEY=build-only python manage.py collectstatic --noinput
+RUN SECRET_KEY=build-only DATABASE_URL=sqlite:///tmp.db python manage.py collectstatic --noinput
 
 USER app
 
