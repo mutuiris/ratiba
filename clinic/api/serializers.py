@@ -36,6 +36,7 @@ class RescheduleRequestSerializer(serializers.Serializer):
     """Input for PATCH /appointments/{id}/reschedule"""
 
     start_at = serializers.DateTimeField()
+    doctor = serializers.IntegerField(required=False)
 
 
 class CancelRequestSerializer(serializers.Serializer):
