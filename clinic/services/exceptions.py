@@ -30,6 +30,13 @@ class OffGrid(BookingError):
         super().__init__(message)
 
 
+class UnknownPatient(BookingError):
+    http_status = 404
+
+    def __init__(self, message="Unknown patient"):
+        super().__init__(message)
+
+
 class SlotTaken(BookingError):
     http_status = 409
 
