@@ -34,6 +34,12 @@ def test_book_in_past(doctor, patient):
 
 
 @pytest.mark.django_db
+def test_book_off_grid_rejected(doctor, patient):
+    with pytest.raises(ex.OffGrid):
+        book(doctor.id, patient.id, slot(6, 7), now=slot(0))  # 09:07 Nairobi, not on the grid
+
+
+@pytest.mark.django_db
 def test_book_taken(doctor, patient):
     book(doctor.id, patient.id, slot(6), now=slot(0))
     with pytest.raises(ex.SlotTaken):
