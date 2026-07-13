@@ -34,8 +34,11 @@ def availability(request, doctor_id):
     doctor = get_object_or_404(Doctor, pk=doctor_id)
     day = date.fromisoformat(request.GET.get("date") or date.today().isoformat())
     raw_slots = get_availability(doctor_id, day)
-    morning = [{"iso": s.isoformat(), "display": s.strftime("%H:%M")} for s in raw_slots if s.hour < 12]
-    afternoon = [{"iso": s.isoformat(), "display": s.strftime("%H:%M")} for s in raw_slots if s.hour >= 12]
+    fmt = [
+        {"iso": s.isoformat(), "display": s.strftime("%H:%M"), "hour": s.hour} for s in raw_slots
+    ]
+    morning = [s for s in fmt if s["hour"] < 12]
+    afternoon = [s for s in fmt if s["hour"] >= 12]
     return render(
         request,
         "clinic/availability.html",

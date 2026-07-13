@@ -8,5 +8,10 @@ from django.conf import settings
 
 @pytest.fixture(autouse=True, scope="session")
 def _ensure_static_root():
-    # WhiteNoise warns if STATIC_ROOT is missing, so create it for the test run
     Path(settings.STATIC_ROOT).mkdir(parents=True, exist_ok=True)
+
+
+@pytest.fixture(autouse=True)
+def _disable_ssl_redirect(settings):
+    """Prevent SECURE_SSL_REDIRECT from 301 all test requests in CI"""
+    settings.SECURE_SSL_REDIRECT = False
