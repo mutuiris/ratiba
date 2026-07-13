@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Log in · Ratiba Clinic</title>
+  <title>Sign up · Ratiba Clinic</title>
   <style>
     :root { --primary: #0d9488; --primary-dark: #0f766e; --border: #e2e8f0; --text: #1e293b; --muted: #64748b; }
     * { box-sizing: border-box; margin: 0; }
@@ -44,14 +44,14 @@
     </div>
     <div class="panel-form">
       <div class="form-wrapper">
-        <h2>Welcome back</h2>
-        <p class="sub">Log in to manage your appointments</p>
+        <h2>Create an account</h2>
+        <p class="sub">Get started with your appointments</p>
         <form method="post">
           {% csrf_token %}
           {{ form.as_p }}
-          <button type="submit">Log in</button>
+          <button type="submit">Sign up</button>
         </form>
-        <p class="link">No account? <a href="{% url 'signup' %}">Sign up</a></p>
+        <p class="link">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
       </div>
     </div>
   </div>

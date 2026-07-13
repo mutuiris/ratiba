@@ -51,14 +51,60 @@
     .btn-danger { background: transparent; color: var(--err-fg); border: 1px solid var(--border); }
     .btn-danger:hover { background: var(--err-bg); }
 
-    .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: .5rem; }
+    /* Doctor grid */
+    .doctor-grid { display: grid; gap: 1rem; }
+    .doctor-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 1.1rem 1.25rem;
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .doctor-avatar {
+      width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #0d9488, #14b8a6);
+      color: #fff; font-weight: 700; font-size: 1.1rem;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .doctor-info { flex: 1; min-width: 120px; }
+    .doctor-info strong { display: block; font-size: 1rem; }
+    .doctor-days { font-size: .8rem; color: var(--muted); }
+    .doctor-action { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .doctor-action input[type=date] { width: auto; padding: .45rem .6rem; font-size: .9rem; }
+
+    /* Slots */
+    .slot-sections { display: grid; gap: 1.25rem; }
+    .slot-period { font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 .5rem; }
+    .slots { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: .5rem; }
     .slots button { width: 100%; background: #fff; color: var(--primary-dark); border: 1px solid var(--primary); font-variant-numeric: tabular-nums; }
     .slots button:hover { background: var(--primary); color: #fff; }
 
-    table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
-    th, td { padding: .7rem .9rem; text-align: left; border-bottom: 1px solid var(--border); }
-    th { background: #f8fafc; font-size: .8rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); }
-    tr:last-child td { border-bottom: 0; }
+    /* Appointments */
+    .appt-list { display: grid; gap: .75rem; }
+    .appt-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+      box-shadow: var(--shadow); padding: 1rem 1.25rem;
+      display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;
+    }
+    .appt-date {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: var(--bg); border-radius: 8px; padding: .5rem .7rem; min-width: 52px;
+    }
+    .appt-day { font-size: 1.4rem; font-weight: 700; line-height: 1; color: var(--primary-dark); }
+    .appt-month { font-size: .75rem; text-transform: uppercase; color: var(--muted); }
+    .appt-details { flex: 1; min-width: 140px; }
+    .appt-details strong { display: block; }
+    .appt-actions { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+
+    /* Banner */
+    .banner {
+      background: #dbeafe; color: #1e40af; padding: .6rem 1rem; border-radius: var(--radius);
+      font-size: .9rem; margin-bottom: 1rem; font-weight: 500;
+    }
+    .back-link { font-size: .9rem; color: var(--muted); text-decoration: none; display: inline-block; margin-bottom: .75rem; }
+    .back-link:hover { color: var(--primary-dark); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--muted); }
+    .empty-state p { margin-bottom: 1rem; font-size: 1.1rem; }
+
     .actions { display: flex; gap: .4rem; align-items: center; }
     .inline { display: inline; }
   </style>

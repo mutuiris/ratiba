@@ -1,31 +1,35 @@
 {% extends "clinic/base.html" %}
 {% block title %}My appointments{% endblock %}
 {% block content %}
-  <h1>My upcoming appointments</h1>
+  <h1>My appointments</h1>
   {% if appointments %}
-    <table>
-      <thead><tr><th>Doctor</th><th>When</th><th></th></tr></thead>
-      <tbody>
-        {% for appt in appointments %}
-          <tr>
-            <td>{{ appt.doctor.name }}</td>
-            <td>{{ appt.start_at|date:"D j M · H:i" }}</td>
-            <td>
-              <div class="actions">
-                <a class="btn btn-ghost" href="{% url 'web-availability' appt.doctor.id %}?reschedule={{ appt.id }}">Reschedule</a>
-                <form method="post" action="{% url 'web-cancel' appt.id %}" class="inline">
-                  {% csrf_token %}
-                  <button class="btn-danger" type="submit">Cancel</button>
-                </form>
-              </div>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="appt-list">
+      {% for appt in appointments %}
+        <div class="appt-card">
+          <div class="appt-date">
+            <span class="appt-day">{{ appt.start_at|date:"d" }}</span>
+            <span class="appt-month">{{ appt.start_at|date:"M" }}</span>
+          </div>
+          <div class="appt-details">
+            <strong>{{ appt.doctor.name }}</strong>
+            <span class="muted">{{ appt.start_at|date:"l · H:i" }}</span>
+          </div>
+          <div class="appt-actions">
+            <a class="btn btn-ghost" href="{% url 'web-availability' appt.doctor.id %}?reschedule={{ appt.id }}">Reschedule</a>
+            <a class="btn btn-ghost" href="{% url 'web-doctors' %}?reschedule={{ appt.id }}">Change doctor</a>
+            <form method="post" action="{% url 'web-cancel' appt.id %}" class="inline"
+                  onsubmit="return confirm('Cancel this appointment with {{ appt.doctor.name }}?')">
+              {% csrf_token %}
+              <button class="btn-danger" type="submit">Cancel</button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
   {% else %}
-    <div class="card">
-      <p class="muted" style="margin:0">No upcoming appointments. <a href="{% url 'web-doctors' %}">Book one &rarr;</a></p>
+    <div class="empty-state">
+      <p>No upcoming appointments</p>
+      <a class="btn" href="{% url 'web-doctors' %}">Book an appointment</a>
     </div>
   {% endif %}
 {% endblock %}

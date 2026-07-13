@@ -1,23 +1,51 @@
 {% extends "clinic/base.html" %}
 {% block title %}Availability{% endblock %}
 {% block content %}
+  {% if reschedule_id %}
+    <div class="banner">Rescheduling — pick a new time below</div>
+  {% endif %}
+  <a class="back-link" href="{% url 'web-doctors' %}{% if reschedule_id %}?reschedule={{ reschedule_id }}{% endif %}">&larr; Back to doctors</a>
   <h1>{{ doctor.name }}</h1>
-  <p class="muted">{{ day|date:"l, j F Y" }}{% if reschedule_id %} — pick a new slot to reschedule{% endif %}</p>
-  <div class="card">
-    {% if slots %}
-      <div class="slots">
-        {% for slot in slots %}
-          <form method="post"
-                action="{% if reschedule_id %}{% url 'web-reschedule' reschedule_id %}{% else %}{% url 'web-book' doctor.id %}{% endif %}">
-            {% csrf_token %}
-            <input type="hidden" name="start_at" value="{{ slot.isoformat }}">
-            <button type="submit">{{ slot|time:"H:i" }}</button>
-          </form>
-        {% endfor %}
-      </div>
-    {% else %}
-      <p class="muted">No free slots for this day.</p>
-    {% endif %}
-  </div>
-  <a class="btn-ghost btn" href="{% url 'web-doctors' %}">&larr; Choose another day</a>
+  <p class="muted">{{ day|date:"l, j F Y" }}</p>
+
+  {% if has_slots %}
+    <div class="slot-sections">
+      {% if morning %}
+        <div class="slot-section">
+          <h3 class="slot-period">Morning</h3>
+          <div class="slots">
+            {% for slot in morning %}
+              <form method="post"
+                    action="{% if reschedule_id %}{% url 'web-reschedule' reschedule_id %}{% else %}{% url 'web-book' doctor.id %}{% endif %}">
+                {% csrf_token %}
+                <input type="hidden" name="start_at" value="{{ slot.iso }}">
+                {% if reschedule_id %}<input type="hidden" name="doctor_id" value="{{ doctor.id }}">{% endif %}
+                <button type="submit">{{ slot.display }}</button>
+              </form>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      {% if afternoon %}
+        <div class="slot-section">
+          <h3 class="slot-period">Afternoon</h3>
+          <div class="slots">
+            {% for slot in afternoon %}
+              <form method="post"
+                    action="{% if reschedule_id %}{% url 'web-reschedule' reschedule_id %}{% else %}{% url 'web-book' doctor.id %}{% endif %}">
+                {% csrf_token %}
+                <input type="hidden" name="start_at" value="{{ slot.iso }}">
+                {% if reschedule_id %}<input type="hidden" name="doctor_id" value="{{ doctor.id }}">{% endif %}
+                <button type="submit">{{ slot.display }}</button>
+              </form>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="card">
+      <p class="muted" style="margin:0">No free slots on this day. Try another date.</p>
+    </div>
+  {% endif %}
 {% endblock %}

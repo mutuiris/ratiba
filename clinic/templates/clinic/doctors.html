@@ -1,21 +1,25 @@
 {% extends "clinic/base.html" %}
 {% block title %}Book{% endblock %}
 {% block content %}
-  <h1>Book an appointment</h1>
-  {% for doctor in doctors %}
-    <div class="card">
-      <form action="{% url 'web-availability' doctor.id %}" method="get" class="card-row">
-        <div class="grow">
+  {% if reschedule_id %}
+    <div class="banner">You're rescheduling — pick a doctor and date below</div>
+  {% endif %}
+  <h1>Our doctors</h1>
+  <div class="doctor-grid">
+    {% for doctor in doctors %}
+      <div class="doctor-card">
+        <div class="doctor-avatar">{{ doctor.name|make_list|first }}</div>
+        <div class="doctor-info">
           <strong>{{ doctor.name }}</strong>
         </div>
-        <div>
-          <label for="date-{{ doctor.id }}">Date</label>
-          <input id="date-{{ doctor.id }}" type="date" name="date" value="{{ today }}" required>
-        </div>
-        <button type="submit">See availability</button>
-      </form>
-    </div>
-  {% empty %}
-    <p class="muted">No doctors yet.</p>
-  {% endfor %}
+        <form action="{% url 'web-availability' doctor.id %}" method="get" class="doctor-action">
+          <input type="date" name="date" value="{{ today }}" required>
+          {% if reschedule_id %}<input type="hidden" name="reschedule" value="{{ reschedule_id }}">{% endif %}
+          <button type="submit">View slots</button>
+        </form>
+      </div>
+    {% empty %}
+      <p class="muted">No doctors available yet.</p>
+    {% endfor %}
+  </div>
 {% endblock %}

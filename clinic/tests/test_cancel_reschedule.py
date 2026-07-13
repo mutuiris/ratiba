@@ -3,6 +3,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
+from clinic.models import Doctor, WorkingHours
 from clinic.services import exceptions as ex
 from clinic.services.booking import book, cancel, reschedule
 
@@ -56,3 +57,33 @@ def test_reschedule_cancelled_409(doctor, patient):
     cancel(appt.id, "x")
     with pytest.raises(ex.Cancelled):
         reschedule(appt.id, slot(7), now=slot(0))
+
+
+@pytest.mark.django_db
+def test_reschedule_cross_doctor(doctor, patient):
+    from datetime import time
+
+    doc_b = Doctor.objects.create(name="Barasa")
+    for wd in range(5):
+        WorkingHours.objects.create(doctor=doc_b, weekday=wd, start_time=time(9), end_time=time(17))
+    appt = book(doctor.id, patient.id, slot(6), now=slot(0))
+    reschedule(appt.id, slot(7), now=slot(0), new_doctor_id=doc_b.id)
+    appt.refresh_from_db()
+    assert appt.doctor_id == doc_b.id
+    assert appt.start_at == slot(7)
+
+
+@pytest.mark.django_db
+def test_reschedule_cross_doctor_taken_keeps_original(doctor, patient):
+    from datetime import time
+
+    doc_b = Doctor.objects.create(name="Barasa")
+    for wd in range(5):
+        WorkingHours.objects.create(doctor=doc_b, weekday=wd, start_time=time(9), end_time=time(17))
+    appt = book(doctor.id, patient.id, slot(6), now=slot(0))
+    book(doc_b.id, patient.id, slot(7), now=slot(0))  # doc_b 07:00 taken
+    with pytest.raises(ex.SlotTaken):
+        reschedule(appt.id, slot(7), now=slot(0), new_doctor_id=doc_b.id)
+    appt.refresh_from_db()
+    assert appt.doctor_id == doctor.id  # original untouched
+    assert appt.start_at == slot(6)

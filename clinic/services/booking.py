@@ -82,7 +82,10 @@ def cancel(appointment_id: int, reason: str) -> Appointment:
 
 
 def reschedule(
-    appointment_id: int, new_start: datetime, now: datetime | None = None
+    appointment_id: int,
+    new_start: datetime,
+    now: datetime | None = None,
+    new_doctor_id: int | None = None,
 ) -> Appointment:
     """Move a booked appointment to a new validated slot as one atomic update"""
     now = now or timezone.now()
@@ -90,12 +93,14 @@ def reschedule(
     if appt.status != "booked":
         raise ex.Cancelled()
 
-    _validate_slot(appt.doctor_id, new_start, now)
+    doctor_id = new_doctor_id or appt.doctor_id  # type: ignore[attr-defined]
+    _validate_slot(doctor_id, new_start, now)
+    appt.doctor_id = doctor_id  # type: ignore[attr-defined]
     appt.start_at = new_start
     appt.end_at = new_start + SLOT
     try:
         with transaction.atomic():
-            appt.save(update_fields=["start_at", "end_at"])
+            appt.save(update_fields=["doctor_id", "start_at", "end_at"])
     except IntegrityError as exc:
         appt.refresh_from_db()  # new slot taken, original row is untouched
         raise ex.SlotTaken() from exc

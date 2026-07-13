@@ -13,7 +13,7 @@ from clinic.api.serializers import (
     CancelRequestSerializer,
     RescheduleRequestSerializer,
 )
-from clinic.models import Appointment
+from clinic.models import Appointment, Doctor
 from clinic.services import booking
 from clinic.services.appointments import upcoming_for_patient
 from clinic.services.availability import get_availability
@@ -41,6 +41,7 @@ def create_appointment(request):
 @api_view(["GET"])
 def doctor_availability(request, doctor_id):
     """List a doctor's free 30-minute slots for a date"""
+    get_object_or_404(Doctor, pk=doctor_id)
     raw = request.query_params.get("date")
     if not raw:
         return Response({"detail": "A date query parameter is required"}, status=400)
@@ -71,7 +72,11 @@ def reschedule_appointment(request, pk):
     data.is_valid(raise_exception=True)
     check_appointment(request, get_object_or_404(Appointment, pk=pk))
     try:
-        appt = booking.reschedule(pk, data.validated_data["start_at"])
+        appt = booking.reschedule(
+            pk,
+            data.validated_data["start_at"],
+            new_doctor_id=data.validated_data.get("doctor"),
+        )
     except BookingError as exc:
         return Response({"detail": exc.message}, status=exc.http_status)
     return Response(AppointmentSerializer(appt).data)

@@ -31,6 +31,8 @@ class Command(BaseCommand):
                 )
 
         user_model = get_user_model()
+
+        # Demo patient
         user, created = user_model.objects.get_or_create(
             username="Addy", defaults={"role": "patient"}
         )
@@ -39,4 +41,15 @@ class Command(BaseCommand):
             user.save(update_fields=["password"])
         Patient.objects.get_or_create(user=user, defaults={"name": "Addy Makau"})
 
-        self.stdout.write(self.style.SUCCESS(f"Seeded {len(DOCTORS)} doctors and demo patient"))
+        # Staff superuser for /admin
+        admin, created = user_model.objects.get_or_create(
+            username="admin",
+            defaults={"role": "staff", "is_staff": True, "is_superuser": True},
+        )
+        if created:
+            admin.set_password("admin12345")
+            admin.save(update_fields=["password"])
+
+        self.stdout.write(
+            self.style.SUCCESS(f"Seeded {len(DOCTORS)} doctors, demo patient, and admin user")
+        )
