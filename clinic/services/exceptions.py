@@ -25,6 +25,11 @@ class TooSoon(BookingError):
         super().__init__(message)
 
 
+class OffGrid(BookingError):
+    def __init__(self, message="Bookings must start on a 30-minute slot boundary"):
+        super().__init__(message)
+
+
 class SlotTaken(BookingError):
     http_status = 409
 
