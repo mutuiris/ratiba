@@ -1,14 +1,21 @@
 {% extends "clinic/base.html" %}
-{% block title %}Doctors{% endblock %}
+{% block title %}Book{% endblock %}
 {% block content %}
   <h1>Book an appointment</h1>
   {% for doctor in doctors %}
-    <form action="{% url 'web-availability' doctor.id %}" method="get">
-      <strong>{{ doctor.name }}</strong>
-      <input type="date" name="date" value="{{ today }}" required>
-      <button type="submit">See availability</button>
-    </form>
+    <div class="card">
+      <form action="{% url 'web-availability' doctor.id %}" method="get" class="card-row">
+        <div class="grow">
+          <strong>{{ doctor.name }}</strong>
+        </div>
+        <div>
+          <label for="date-{{ doctor.id }}">Date</label>
+          <input id="date-{{ doctor.id }}" type="date" name="date" value="{{ today }}" required>
+        </div>
+        <button type="submit">See availability</button>
+      </form>
+    </div>
   {% empty %}
-    <p>No doctors yet.</p>
+    <p class="muted">No doctors yet.</p>
   {% endfor %}
 {% endblock %}
