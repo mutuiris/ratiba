@@ -1,0 +1,26 @@
+app = "ratiba"
+primary_region = "jnb"
+
+[build]
+
+[deploy]
+  release_command = "sh -c 'python manage.py migrate --noinput && python manage.py seed'"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[http_service.checks]]
+  grace_period = "10s"
+  interval = "30s"
+  method = "GET"
+  path = "/health"
+  timeout = "5s"
+
+[env]
+  DEBUG = "False"
+  ALLOWED_HOSTS = "ratiba.fly.dev"
+  CSRF_TRUSTED_ORIGINS = "https://ratiba.fly.dev"
