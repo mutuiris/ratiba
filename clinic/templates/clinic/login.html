@@ -1,12 +1,59 @@
-{% extends "clinic/base.html" %}
-{% block title %}Log in{% endblock %}
-{% block content %}
-  <h1>Log in</h1>
-  <div class="card" style="max-width:380px">
-    <form method="post">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button type="submit">Log in</button>
-    </form>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in · Ratiba Clinic</title>
+  <style>
+    :root { --primary: #0d9488; --primary-dark: #0f766e; --border: #e2e8f0; --text: #1e293b; --muted: #64748b; }
+    * { box-sizing: border-box; margin: 0; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.5; color: var(--text); }
+    .split { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+    .panel-brand {
+      background: linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%);
+      display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 3rem; color: #fff;
+    }
+    .panel-brand h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: .5rem; }
+    .panel-brand p { font-size: 1.1rem; opacity: .85; }
+    .panel-form { display: flex; flex-direction: column; justify-content: center; padding: 3rem; background: #fff; }
+    .form-wrapper { max-width: 360px; width: 100%; margin: 0 auto; }
+    .form-wrapper h2 { font-size: 1.5rem; margin-bottom: .25rem; }
+    .form-wrapper .sub { color: var(--muted); margin-bottom: 2rem; font-size: .95rem; }
+    .form-wrapper p { margin-bottom: 1rem; }
+    .form-wrapper label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: .3rem; font-weight: 500; }
+    .form-wrapper input[type=text], .form-wrapper input[type=password] {
+      width: 100%; padding: .65rem .8rem; border: 1px solid var(--border); border-radius: 8px; font: inherit; background: #f8fafc;
+    }
+    .form-wrapper input:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    .form-wrapper button {
+      width: 100%; padding: .7rem; border: 0; border-radius: 8px; background: var(--primary); color: #fff;
+      font: inherit; font-weight: 600; cursor: pointer; margin-top: .5rem;
+    }
+    .form-wrapper button:hover { background: var(--primary-dark); }
+    .form-wrapper .link { text-align: center; margin-top: 1.5rem; color: var(--muted); font-size: .9rem; }
+    .form-wrapper .link a { color: var(--primary-dark); text-decoration: none; font-weight: 500; }
+    .form-wrapper .link a:hover { text-decoration: underline; }
+    .errorlist { list-style: none; padding: 0; margin: .25rem 0 .75rem; font-size: .85rem; color: #dc2626; }
+    @media (max-width: 768px) { .split { grid-template-columns: 1fr; } .panel-brand { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="split">
+    <div class="panel-brand">
+      <h1>Ratiba Clinic</h1>
+    </div>
+    <div class="panel-form">
+      <div class="form-wrapper">
+        <h2>Welcome back</h2>
+        <p class="sub">Log in to manage your appointments</p>
+        <form method="post">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button type="submit">Log in</button>
+        </form>
+        <p class="link">No account? <a href="{% url 'signup' %}">Sign up</a></p>
+      </div>
+    </div>
   </div>
-{% endblock %}
+</body>
+</html>
