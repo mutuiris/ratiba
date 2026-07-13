@@ -4,22 +4,28 @@
   <h1>My upcoming appointments</h1>
   {% if appointments %}
     <table>
-      <tr><th>Doctor</th><th>When</th><th></th></tr>
-      {% for appt in appointments %}
-        <tr>
-          <td>{{ appt.doctor.name }}</td>
-          <td>{{ appt.start_at|date:"D j M, H:i" }}</td>
-          <td>
-            <a href="{% url 'web-availability' appt.doctor.id %}?reschedule={{ appt.id }}">Reschedule</a>
-            <form method="post" action="{% url 'web-cancel' appt.id %}" style="display:inline">
-              {% csrf_token %}
-              <button type="submit">Cancel</button>
-            </form>
-          </td>
-        </tr>
-      {% endfor %}
+      <thead><tr><th>Doctor</th><th>When</th><th></th></tr></thead>
+      <tbody>
+        {% for appt in appointments %}
+          <tr>
+            <td>{{ appt.doctor.name }}</td>
+            <td>{{ appt.start_at|date:"D j M · H:i" }}</td>
+            <td>
+              <div class="actions">
+                <a class="btn btn-ghost" href="{% url 'web-availability' appt.doctor.id %}?reschedule={{ appt.id }}">Reschedule</a>
+                <form method="post" action="{% url 'web-cancel' appt.id %}" class="inline">
+                  {% csrf_token %}
+                  <button class="btn-danger" type="submit">Cancel</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
     </table>
   {% else %}
-    <p>No upcoming appointments. <a href="{% url 'web-doctors' %}">Book one</a>.</p>
+    <div class="card">
+      <p class="muted" style="margin:0">No upcoming appointments. <a href="{% url 'web-doctors' %}">Book one &rarr;</a></p>
+    </div>
   {% endif %}
 {% endblock %}
