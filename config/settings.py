@@ -6,7 +6,7 @@ import environ
 
 from config import gcp_secrets
 
-gcp_secrets.load_secrets() # on Cloud Run, seed os.environ from Secret Manager
+gcp_secrets.load_secrets()  # on Cloud Run, seed os.environ from Secret Manager
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
