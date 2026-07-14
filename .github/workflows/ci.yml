@@ -52,7 +52,7 @@ jobs:
         run: python manage.py migrate --noinput
 
       - name: Test with coverage
-        run: coverage run --source=clinic -m pytest -q
+        run: pytest -q
 
       - name: Upload to Coveralls
         env:
