@@ -1,5 +1,7 @@
 # Ratiba — Clinic Appointment Booking
 
+[![Coverage Status](https://coveralls.io/repos/github/mutuiris/ratiba/badge.svg?branch=main)](https://coveralls.io/github/mutuiris/ratiba?branch=main)
+
 Is an appointment system where patients browse doctors, view available 30-minute slots, and book/cancel/reschedule appointments. Built with Django, DRF, and PostgreSQL.
 
 ## Live Application
