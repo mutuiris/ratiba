@@ -39,14 +39,58 @@ ruff check .    # lint
 ruff format .   # format
 ```
 
+## Design Decisions
+
+### Computed Slots (not stored rows)
+
+Availability is computed on-the-fly from working hours rules — no `Slot` table that drifts out of sync when schedules change:
+
+```
+WorkingHours -> generate 30-min grid -> subtract booked -> subtract time-offs -> subtract too-soon
+```
+
+### Double-Booking Prevention
+
+A partial unique index at the database level guarantees only one active booking per slot, even under concurrent requests:
+
+```sql
+UNIQUE(doctor, start_at) WHERE status='booked'
+```
+
+Two patients submitting the same slot simultaneously: the first `INSERT` wins, the second hits `IntegrityError` -> returns 409 Conflict.
+
+### Atomic Reschedule
+
+Rescheduling is a single `UPDATE` inside `transaction.atomic()` - the row never enters a "free" state. If the new slot is taken, `refresh_from_db()` restores the original. The patient always keeps an appointment.
+
+### Compare-and-Set Cancel
+
+```python
+updated = Appointment.objects.filter(id=id, status="booked").update(status="cancelled", ...)
+```
+
+Check and write in one SQL statement. Two concurrent cancel requests: one gets `updated=1`, the other gets `updated=0` → raises `AlreadyCancelled`.
+
+### UTC Storage, Local Display
+
+All `DateTimeField` values store UTC. The `ClinicTimezoneMiddleware` activates `Africa/Nairobi` for template rendering. API always returns UTC - clients convert on their end.
+
+### Services Layer
+
+Both API views (DRF) and web views (server-rendered) call the same service functions in `clinic/services/`. Business logic exists in one place - views are thin adapters that parse input, call the service, and format output.
+
+Full rationale: [docs/DESIGN.md](docs/DESIGN.md)
+
 ## CI/CD Pipeline
 
 | Trigger              | What happens                                                                          |
 | -------------------- | ------------------------------------------------------------------------------------- |
-| Pull request opened  | CI runs: lint + format check + tests against Postgres 17                              |
-| PR merged to`main` | Deploy runs: tests pass → Cloud Build builds image → Cloud Run deploys new revision |
+| Pull request opened  | CI runs: ruff lint + format check + pytest against Postgres 17 service container      |
+| PR merged to`main` | Deploy runs: tests pass -> Cloud Build builds image -> Cloud Run deploys new revision |
 
-Pipeline blocks PRs on test failure. Deployment uses Workload Identity Federation (keyless auth from GitHub to GCP).
+- PRs are blocked on test failure
+- Deployment uses **Workload Identity Federation** - no stored JSON keys; GitHub OIDC token exchanged for short-lived GCP credentials
+- `concurrency: cancel-in-progress` ensures only one deploy runs at a time
 
 ## Documentation
 
