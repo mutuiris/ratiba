@@ -37,7 +37,7 @@ def test_login_page_renders(client):
 def test_home_requires_login(client):
     response = client.get("/")
     assert response.status_code == 302
-    assert "/login/" in response.url
+    assert "/login/" in response["Location"]
 
 
 @pytest.mark.django_db
@@ -53,7 +53,7 @@ def test_book_via_web_creates_and_redirects(patient_client, doctor, frozen_now):
     client, _ = patient_client
     response = client.post(f"/doctors/{doctor.id}/book", {"start_at": "2026-07-15T06:00:00+00:00"})
     assert response.status_code == 302
-    assert response.url == "/appointments"
+    assert response["Location"] == "/appointments"
 
 
 @pytest.mark.django_db
@@ -77,7 +77,7 @@ def test_availability_page_shows_slots(patient_client, doctor, frozen_now):
 def test_cancel_via_web(patient_client, doctor, frozen_now):
     client, user = patient_client
     appt = book(doctor.id, user.patient.id, datetime(2026, 7, 15, 6, 0, tzinfo=UTC), now=frozen_now)
-    response = client.post(f"/appointments/{appt.id}/cancel")
+    response = client.post(f"/appointments/{appt.pk}/cancel")
     assert response.status_code == 302
     appt.refresh_from_db()
     assert appt.status == "cancelled"
@@ -88,7 +88,7 @@ def test_reschedule_via_web(patient_client, doctor, frozen_now):
     client, user = patient_client
     appt = book(doctor.id, user.patient.id, datetime(2026, 7, 15, 6, 0, tzinfo=UTC), now=frozen_now)
     response = client.post(
-        f"/appointments/{appt.id}/reschedule",
+        f"/appointments/{appt.pk}/reschedule",
         {"start_at": "2026-07-15T07:00:00+00:00", "doctor_id": doctor.id},
     )
     assert response.status_code == 302
@@ -103,7 +103,7 @@ def test_staff_appointments_redirects_to_admin():
     client.force_login(staff)
     response = client.get("/appointments")
     assert response.status_code == 302
-    assert "/admin/" in response.url
+    assert "/admin/" in response["Location"]
 
 
 @pytest.mark.django_db
@@ -113,7 +113,20 @@ def test_book_as_staff_rejected(doctor, frozen_now):
     client.force_login(staff)
     response = client.post(f"/doctors/{doctor.id}/book", {"start_at": "2026-07-15T06:00:00+00:00"})
     assert response.status_code == 302
-    assert response.url == "/"
+    assert response["Location"] == "/"
+
+
+@pytest.mark.django_db
+def test_availability_displays_local_time(patient_client, doctor, frozen_now):
+    """Slots must show Africa/Nairobi time (UTC+3), not raw UTC"""
+    client, _ = patient_client
+    response = client.get(f"/doctors/{doctor.id}/availability?date=2026-07-15")
+    context = response.context
+    # Doctor works 09:00-17:00 local. First slot is 09:00 EAT (06:00 UTC)
+    morning = context["morning"]
+    assert len(morning) > 0
+    assert morning[0]["display"] == "09:00"  # local time, not 06:00 UTC
+    assert morning[0]["hour"] == 9
 
 
 @pytest.mark.django_db

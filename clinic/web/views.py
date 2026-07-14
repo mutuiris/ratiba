@@ -1,7 +1,9 @@
 """Server-rendered pages for patients"""
 
 from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -17,12 +19,13 @@ from clinic.services.exceptions import BookingError
 @login_required
 def doctors(request):
     """List doctors and let the patient pick a date"""
+    tz = ZoneInfo(settings.CLINIC_TIMEZONE)
     return render(
         request,
         "clinic/doctors.html",
         {
             "doctors": Doctor.objects.all(),
-            "today": date.today().isoformat(),
+            "today": datetime.now(tz).date().isoformat(),
             "reschedule_id": request.GET.get("reschedule"),
         },
     )
@@ -32,10 +35,16 @@ def doctors(request):
 def availability(request, doctor_id):
     """Show a doctor's free slots for the chosen date"""
     doctor = get_object_or_404(Doctor, pk=doctor_id)
-    day = date.fromisoformat(request.GET.get("date") or date.today().isoformat())
+    tz = ZoneInfo(settings.CLINIC_TIMEZONE)
+    day = date.fromisoformat(request.GET.get("date") or datetime.now(tz).date().isoformat())
     raw_slots = get_availability(doctor_id, day)
     fmt = [
-        {"iso": s.isoformat(), "display": s.strftime("%H:%M"), "hour": s.hour} for s in raw_slots
+        {
+            "iso": s.isoformat(),
+            "display": s.astimezone(tz).strftime("%H:%M"),
+            "hour": s.astimezone(tz).hour,
+        }
+        for s in raw_slots
     ]
     morning = [s for s in fmt if s["hour"] < 12]
     afternoon = [s for s in fmt if s["hour"] >= 12]
