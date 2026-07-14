@@ -1,21 +1,30 @@
-FROM python:3.13-slim AS base
+# Build wheels so the runtime image needs no compiler
+FROM python:3.13-slim AS builder
+
+WORKDIR /build
+
+COPY requirements/prod.txt .
+RUN pip wheel --no-cache-dir --wheel-dir /build/wheels -r prod.txt
+
+# Runtime
+FROM python:3.13-slim
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /app
 
 RUN addgroup --system app && adduser --system --group app
 
-COPY requirements/prod.txt requirements/prod.txt
-RUN pip install --no-cache-dir -r requirements/prod.txt
+COPY --from=builder /build/wheels /wheels
+RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/*.whl && rm -rf /wheels
 
-COPY . .
-
-RUN SECRET_KEY=build-only DATABASE_URL=sqlite:///tmp.db python manage.py collectstatic --noinput
+COPY --chown=app:app . .
+RUN chmod +x entrypoint.sh
 
 USER app
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed && gunicorn config.wsgi --bind 0.0.0.0:8080 --workers 2 --access-logfile -"]
+ENTRYPOINT ["./entrypoint.sh"]
