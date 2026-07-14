@@ -19,12 +19,13 @@ from clinic.services.exceptions import BookingError
 @login_required
 def doctors(request):
     """List doctors and let the patient pick a date"""
+    tz = ZoneInfo(settings.CLINIC_TIMEZONE)
     return render(
         request,
         "clinic/doctors.html",
         {
             "doctors": Doctor.objects.all(),
-            "today": date.today().isoformat(),
+            "today": datetime.now(tz).date().isoformat(),
             "reschedule_id": request.GET.get("reschedule"),
         },
     )
@@ -34,9 +35,9 @@ def doctors(request):
 def availability(request, doctor_id):
     """Show a doctor's free slots for the chosen date"""
     doctor = get_object_or_404(Doctor, pk=doctor_id)
-    day = date.fromisoformat(request.GET.get("date") or date.today().isoformat())
-    raw_slots = get_availability(doctor_id, day)
     tz = ZoneInfo(settings.CLINIC_TIMEZONE)
+    day = date.fromisoformat(request.GET.get("date") or datetime.now(tz).date().isoformat())
+    raw_slots = get_availability(doctor_id, day)
     fmt = [
         {
             "iso": s.isoformat(),
