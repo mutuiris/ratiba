@@ -1,11 +1,12 @@
-"""Django settings for the Ratiba clinic booking system.
-
-Config is read from the environment (12-factor). See .env.example for the vars.
-"""
+"""Django settings for the Ratiba clinic booking system"""
 
 from pathlib import Path
 
 import environ
+
+from config import gcp_secrets
+
+gcp_secrets.load_secrets() # on Cloud Run, seed os.environ from Secret Manager
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -62,7 +63,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Database
-DATABASES = {"default": env.db("DATABASE_URL", default="sqlite:///db.sqlite3")}
+DATABASES = {"default": env.db("DATABASE_URL")}
 
 # Auth
 AUTH_USER_MODEL = "accounts.User"
