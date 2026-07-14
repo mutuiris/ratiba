@@ -21,7 +21,7 @@ COPY --from=builder /build/wheels /wheels
 RUN pip install --no-cache-dir --no-index --find-links=/wheels /wheels/*.whl && rm -rf /wheels
 
 COPY --chown=app:app . .
-RUN chmod +x entrypoint.sh
+RUN chmod +x entrypoint.sh && mkdir -p staticfiles && chown app:app staticfiles
 
 USER app
 
