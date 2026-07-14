@@ -17,7 +17,9 @@ def slot(hour, minute=0):
 @pytest.mark.django_db
 def test_cancel_frees_slot(doctor, patient):
     appt = book(doctor.id, patient.id, slot(6), now=slot(0))
-    cancel(appt.id, "patient sick")
+    result = cancel(appt.id, "patient sick")
+    assert result.status == "cancelled"
+    assert result.cancel_reason == "patient sick"
     rebooked = book(doctor.id, patient.id, slot(6), now=slot(0))
     assert rebooked.status == "booked"
 
@@ -26,7 +28,7 @@ def test_cancel_frees_slot(doctor, patient):
 def test_double_cancel_409(doctor, patient):
     appt = book(doctor.id, patient.id, slot(6), now=slot(0))
     cancel(appt.id, "once")
-    with pytest.raises(ex.AlreadyCancelled):
+    with pytest.raises(ex.AlreadyCancelled, match="already cancelled"):
         cancel(appt.id, "twice")
 
 
@@ -43,8 +45,8 @@ def test_reschedule_moves_and_frees_original(doctor, patient):
 @pytest.mark.django_db
 def test_reschedule_into_taken_keeps_original(doctor, patient):
     appt = book(doctor.id, patient.id, slot(6), now=slot(0))
-    book(doctor.id, patient.id, slot(7), now=slot(0))  # 07:00 already held
-    with pytest.raises(ex.SlotTaken):
+    book(doctor.id, patient.id, slot(7), now=slot(0))
+    with pytest.raises(ex.SlotTaken, match="already taken"):
         reschedule(appt.id, slot(7), now=slot(0))
     appt.refresh_from_db()
     assert appt.start_at == slot(6)
@@ -55,7 +57,7 @@ def test_reschedule_into_taken_keeps_original(doctor, patient):
 def test_reschedule_cancelled_409(doctor, patient):
     appt = book(doctor.id, patient.id, slot(6), now=slot(0))
     cancel(appt.id, "x")
-    with pytest.raises(ex.Cancelled):
+    with pytest.raises(ex.Cancelled, match="Cannot reschedule"):
         reschedule(appt.id, slot(7), now=slot(0))
 
 
@@ -81,9 +83,9 @@ def test_reschedule_cross_doctor_taken_keeps_original(doctor, patient):
     for wd in range(5):
         WorkingHours.objects.create(doctor=doc_b, weekday=wd, start_time=time(9), end_time=time(17))
     appt = book(doctor.id, patient.id, slot(6), now=slot(0))
-    book(doc_b.id, patient.id, slot(7), now=slot(0))  # doc_b 07:00 taken
-    with pytest.raises(ex.SlotTaken):
+    book(doc_b.id, patient.id, slot(7), now=slot(0))
+    with pytest.raises(ex.SlotTaken, match="already taken"):
         reschedule(appt.id, slot(7), now=slot(0), new_doctor_id=doc_b.id)
     appt.refresh_from_db()
-    assert appt.doctor_id == doctor.id  # original untouched
+    assert appt.doctor_id == doctor.id
     assert appt.start_at == slot(6)

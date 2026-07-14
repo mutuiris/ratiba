@@ -134,3 +134,38 @@ def test_book_missing_start_at(patient_client, doctor, frozen_now):
     client, _ = patient_client
     response = client.post(f"/doctors/{doctor.id}/book", {})
     assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_book_invalid_datetime(patient_client, doctor, frozen_now):
+    client, _ = patient_client
+    response = client.post(f"/doctors/{doctor.id}/book", {"start_at": "not-a-date"})
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_reschedule_missing_start_at(patient_client, doctor, frozen_now):
+    client, user = patient_client
+    appt = book(doctor.id, user.patient.id, datetime(2026, 7, 15, 6, 0, tzinfo=UTC), now=frozen_now)
+    response = client.post(f"/appointments/{appt.pk}/reschedule", {})
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_reschedule_invalid_datetime(patient_client, doctor, frozen_now):
+    client, user = patient_client
+    appt = book(doctor.id, user.patient.id, datetime(2026, 7, 15, 6, 0, tzinfo=UTC), now=frozen_now)
+    response = client.post(
+        f"/appointments/{appt.pk}/reschedule",
+        {"start_at": "bad-date", "doctor_id": doctor.id},
+    )
+    assert response.status_code == 302
+
+
+@pytest.mark.django_db
+def test_cancel_already_cancelled_via_web(patient_client, doctor, frozen_now):
+    client, user = patient_client
+    appt = book(doctor.id, user.patient.id, datetime(2026, 7, 15, 6, 0, tzinfo=UTC), now=frozen_now)
+    client.post(f"/appointments/{appt.pk}/cancel")
+    response = client.post(f"/appointments/{appt.pk}/cancel")
+    assert response.status_code == 302

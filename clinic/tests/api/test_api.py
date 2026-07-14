@@ -80,6 +80,37 @@ def test_reschedule_then_cancel_flow(auth_client, doctor, patient, frozen_now):
 
 
 @pytest.mark.django_db
+def test_availability_invalid_date_returns_400(auth_client, doctor, frozen_now):
+    response = auth_client.get(f"/api/doctors/{doctor.id}/availability?date=not-a-date")
+    assert response.status_code == 400
+    assert "YYYY-MM-DD" in response.data["detail"]
+
+
+@pytest.mark.django_db
+def test_cancel_already_cancelled_returns_409(auth_client, doctor, patient, frozen_now):
+    body = {"doctor": doctor.id, "patient": patient.id, "start_at": "2026-07-15T06:00:00Z"}
+    appt_id = auth_client.post("/api/appointments", body, format="json").data["id"]
+    auth_client.patch(f"/api/appointments/{appt_id}/cancel", {"reason": "first"}, format="json")
+    response = auth_client.patch(
+        f"/api/appointments/{appt_id}/cancel", {"reason": "second"}, format="json"
+    )
+    assert response.status_code == 409
+    assert "already cancelled" in response.data["detail"].lower()
+
+
+@pytest.mark.django_db
+def test_reschedule_outside_hours_returns_400(auth_client, doctor, patient, frozen_now):
+    body = {"doctor": doctor.id, "patient": patient.id, "start_at": "2026-07-15T06:00:00Z"}
+    appt_id = auth_client.post("/api/appointments", body, format="json").data["id"]
+    response = auth_client.patch(
+        f"/api/appointments/{appt_id}/reschedule",
+        {"start_at": "2026-07-15T03:00:00Z"},
+        format="json",
+    )
+    assert response.status_code == 400
+
+
+@pytest.mark.django_db
 def test_unauthenticated_is_rejected(doctor, patient):
     response = APIClient().post("/api/appointments", {}, format="json")
     assert response.status_code in (401, 403)

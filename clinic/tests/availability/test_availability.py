@@ -51,3 +51,14 @@ def test_lead_time_filters_near_now(doctor):
     now = datetime(2026, 7, 15, 7, 0, tzinfo=UTC)
     slots = get_availability(doctor.id, WED, now=now)
     assert all(s >= datetime(2026, 7, 15, 8, 0, tzinfo=UTC) for s in slots)
+
+
+@pytest.mark.django_db
+def test_zero_length_window_returns_empty(db):
+    from datetime import time
+
+    from clinic.models import Doctor, WorkingHours
+
+    doc = Doctor.objects.create(name="Short")
+    WorkingHours.objects.create(doctor=doc, weekday=2, start_time=time(9), end_time=time(9))
+    assert get_availability(doc.id, WED, now=MIDNIGHT) == []
