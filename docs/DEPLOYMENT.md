@@ -15,9 +15,18 @@
 | Secrets              | GCP Secret Manager                     |
 | Auth (GitHub → GCP) | Workload Identity Federation (keyless) |
 
+## Branching Model
+
+```
+feature/* ──→ PR ──→ develop (CI runs) ──→ merge ──→ prod (Deploy runs)
+```
+
+- `develop` — integration branch, default. All PRs target here.
+- `prod` — deployment branch. Only receives merges from `develop`, no direct commits.
+
 ## CI Pipeline (`.github/workflows/ci.yml`)
 
-Triggers on **every pull request** and **push to main**.
+Triggers on **every pull request** and **push to `develop`**.
 
 ```
 Checkout -> Setup Python 3.13 -> Install deps
@@ -25,13 +34,14 @@ Checkout -> Setup Python 3.13 -> Install deps
   -> ruff format --check (formatting)
   -> migrate (against Postgres 17 service container)
   -> pytest with coverage (must pass 85% threshold)
+  -> upload coverage to Coveralls
 ```
 
 If any step fails, the PR is blocked from merging.
 
 ## Deploy Pipeline (`.github/workflows/deploy.yml`)
 
-Triggers on **push to main**.
+Triggers on **push to `prod`**.
 
 ```
 Job 1: test (same as CI — lint + format + test)
@@ -45,12 +55,17 @@ Job 2: deploy
 
 - Deploy only runs after tests pass (`needs: test`)
 - `concurrency: cancel-in-progress` ensures only one deploy runs at a time
-- Workload Identity Federation - no stored JSON keys, GitHub OIDC token exchanged for short-lived GCP credentials
+- Workload Identity Federation — no stored JSON keys, GitHub OIDC token exchanged for short-lived GCP credentials
 
 ## How a Code Change Reaches Production
 
 ```
-Feature branch → PR → CI runs (lint + test) → Review → Merge to main
+Feature branch → PR → CI runs (lint + test) → Review → Merge to develop
+                                                              │
+                                                     (when ready to deploy)
+                                                              │
+                                                              ▼
+                                                   Merge develop → prod
                                                               │
                                                               ▼
                                                    Deploy workflow triggers
@@ -77,14 +92,29 @@ Feature branch → PR → CI runs (lint + test) → Review → Merge to main
 
 ## Container
 
-The Dockerfile uses a multi stage approach:
+The Dockerfile uses a multi-stage build:
 
-1. Install Python dependencies from `requirements/prod.txt`
-2. Copy source and run `collectstatic` (with dummy SECRET_KEY)
-3. Switch to non-root `app` user
-4. CMD: `migrate -> seed -> gunicorn` on port 8080
+1. **Builder stage**: pip wheel all dependencies from `requirements/prod.txt`
+2. **Runtime stage**: install wheels (no compiler in image), copy source
+3. Create `/app/staticfiles` with `app` ownership
+4. Switch to non-root `app` user
+
+**Entrypoint** (`entrypoint.sh` with `set -euo pipefail`):
+
+```
+collectstatic → migrate → seed → exec gunicorn (port 8080)
+```
 
 Cloud Run provides the `PORT=8080` environment variable and handles HTTPS termination.
+
+## Runtime Secrets
+
+Secrets are fetched from GCP Secret Manager at container start via `config/gcp_secrets.py`:
+
+1. Checks for `K_SERVICE` env var
+2. Uses `google.auth.default()` to resolve project ID
+3. Fetches the `ratiba-env` secret (a single JSON blob)
+4. Seeds `os.environ` with all key-value pairs
 
 ## Security
 

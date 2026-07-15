@@ -1,6 +1,6 @@
 # Ratiba — Clinic Appointment Booking
 
-[![Coverage Status](https://coveralls.io/repos/github/mutuiris/ratiba/badge.svg?branch=main)](https://coveralls.io/github/mutuiris/ratiba?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/mutuiris/ratiba/badge.svg?branch=develop)](https://coveralls.io/github/mutuiris/ratiba?branch=develop)
 
 Is an appointment system where patients browse doctors, view available 30-minute slots, and book/cancel/reschedule appointments. Built with Django, DRF, and PostgreSQL.
 
@@ -36,7 +36,7 @@ Visit http://localhost:8000 — login as `Addy`/`addy12345` (patient) or `admin`
 ### Run Tests
 
 ```bash
-pytest          # runs with coverage (85% gate)
+pytest          # runs with coverage
 ruff check .    # lint
 ruff format .   # format
 ```
@@ -85,14 +85,17 @@ Full rationale: [docs/DESIGN.md](docs/DESIGN.md)
 
 ## CI/CD Pipeline
 
-| Trigger              | What happens                                                                          |
-| -------------------- | ------------------------------------------------------------------------------------- |
-| Pull request opened  | CI runs: ruff lint + format check + pytest against Postgres 17 service container      |
-| PR merged to`main` | Deploy runs: tests pass -> Cloud Build builds image -> Cloud Run deploys new revision |
+| Trigger                      | What happens                                                                          |
+| ---------------------------- | ------------------------------------------------------------------------------------- |
+| Pull request opened          | CI runs: ruff lint + format check + pytest against Postgres 17 service container      |
+| Push to`develop`           | CI runs: same as above + coverage upload to Coveralls                                 |
+| Merge`develop` → `prod` | Deploy runs: tests pass → Cloud Build builds image → Cloud Run deploys new revision |
 
 - PRs are blocked on test failure
-- Deployment uses **Workload Identity Federation** - no stored JSON keys; GitHub OIDC token exchanged for short-lived GCP credentials
-- `concurrency: cancel-in-progress` ensures only one deploy runs at a time
+- `develop` is the integration branch; `prod` is the deployment branch
+- Deployment uses **Workload Identity Federation** — no stored JSON keys; GitHub OIDC token exchanged for short-lived GCP credentials
+- Runtime secrets fetched from **GCP Secret Manager** at container start (no env vars in Cloud Run config)
+- Non-root container user (`app`) with bash entrypoint (`set -euo pipefail`)
 
 ## Documentation
 

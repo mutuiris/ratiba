@@ -27,15 +27,24 @@ ratiba/
       views.py        Thin HTTP handlers -> call services
       middleware.py   Timezone activation for templates
     templates/        HTML templates (doctors, availability, appointments)
-    tests/            pytest test suite
+    tests/            pytest suite (domain-based modules)
+      booking/        Book, cancel, reschedule tests
+      availability/   Slot computation + patient queries
+      api/            DRF endpoints, auth, permissions
+      web/            Server-rendered view tests
+      models/         Constraints, __str__, seed, config
+      concurrency/    Thread-race double-booking tests
+      admin/          Admin model methods
     management/commands/seed.py  Idempotent demo data
   requirements/
     prod.txt          Runtime dependencies
     dev.txt           Includes prod.txt + testing/linting tools
-  Dockerfile          Multi-stage: deps -> collectstatic -> non-root -> gunicorn
+  config/gcp_secrets.py  Runtime secret fetch from GCP Secret Manager
+  entrypoint.sh      Bash entrypoint (set -euo pipefail + exec gunicorn)
+  Dockerfile          Multi-stage: builder wheels -> runtime non-root app user
   .github/workflows/
-    ci.yml            Lint + test on every PR
-    deploy.yml        Test + deploy to Cloud Run on push to main
+    ci.yml            Lint + test on every PR and push to develop
+    deploy.yml        Test + deploy to Cloud Run on push to prod
 ```
 
 ## Request Flow
